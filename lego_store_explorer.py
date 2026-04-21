@@ -85,6 +85,9 @@ def add_distance_column(df, user_lat, user_lon):
         axis=1
     )
 
+    # Create a text label for the tooltip so pydeck displays distance correctly
+    df["Distance_Label"] = df["Distance_Miles"].round(2).astype(str) + " miles"
+
     df = df.sort_values(by="Distance_Miles")
     return df
 
@@ -155,7 +158,8 @@ def make_map(df):
     """Display LEGO stores on an interactive map."""
     st.pydeck_chart(
         pdk.Deck(
-            map_style="mapbox://styles/mapbox/light-v9",
+            map_provider="carto",
+            map_style="light",
             initial_view_state=pdk.ViewState(
                 latitude=df["Latitude"].mean(),
                 longitude=df["Longitude"].mean(),
@@ -168,11 +172,14 @@ def make_map(df):
                     data=df,
                     get_position="[Longitude, Latitude]",
                     get_radius=50000,
+                    get_fill_color=[255, 0, 0, 180],
+                    get_line_color=[255, 255, 255],
+                    line_width_min_pixels=1,
                     pickable=True,
                 )
             ],
             tooltip={
-                "text": "{Store Name}\n{City}, {State}\n{Country}\nDistance: {Distance_Miles:.2f} miles"
+                "text": "{Store Name}\n{City}, {State}\n{Country}\nDistance: {Distance_Label}"
             },
         )
     )
@@ -184,7 +191,6 @@ def main():
     st.write("This app explores LEGO store locations across the USA and Canada.")
     st.write("It filters stores, compares store counts, and finds the nearest location.")
 
-    # Make sure this CSV file is in the same folder as this Python file
     df = load_data("LegoUSACanada(in).csv")
     df = clean_data(df)
 
